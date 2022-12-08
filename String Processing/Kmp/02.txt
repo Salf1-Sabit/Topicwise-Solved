@@ -1,0 +1,110 @@
+/**
+ *    author: Salfi_Sabit 
+ *    created: 08.12.2022 11:53 PM
+ *    problem: https://codeforces.com/contest/271/problem/D
+**/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL 
+#include "template/debug.h"
+#else 
+#define dbg(args...) 
+#endif
+
+template <typename T> 
+struct string_hash { 
+  int n;
+  int p = 53;
+  int p2 = 31;
+  int m = (int) 1e9 + 7;
+  vector<T> p_pow;
+  vector<T> p2_pow;
+  void gen_pow () { 
+    p_pow[0] = p2_pow[0] = 1;
+    for (int i = 1; i < n; i++) { 
+      p_pow[i] = (p_pow[i - 1] * 1LL * p) % m;
+      p2_pow[i] = (p2_pow[i - 1] * 1LL * p2) % m;
+    }
+  }
+  string_hash (int n) { 
+    this -> n = n;
+    p_pow.assign(n, 0);
+    p2_pow.assign(n, 0);
+    gen_pow();
+  }
+  vector<T> ret_hashp (string s) { 
+    int m1 = (int) s.size();
+    vector<T> hash_pref(m1);
+    hash_pref[0] = s[0] - 'a' + 1;
+    for (int i = 1; i < m1; ++i) { 
+      hash_pref[i] = (1LL * hash_pref[i - 1] + (((s[i] - 'a' + 1) * 1LL * p_pow[i]) % m)) % m;
+    }
+    return hash_pref;
+  }
+  vector<T> ret_hashp2 (string s) { 
+    int m1 = (int) s.size();
+    vector<T> hash_pref(m1);
+    hash_pref[0] = s[0] - 'a' + 1;
+    for (int i = 1; i < m1; ++i) { 
+      hash_pref[i] = (1LL * hash_pref[i - 1] + (((s[i] - 'a' + 1) * 1LL * p2_pow[i]) % m)) % m;
+    }
+    return hash_pref;
+  }
+};
+
+int main() { 
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  int k;
+  string s, t;
+  cin >> s >> t >> k;
+  int N = (int) 2e3;
+  int n = (int) s.size();
+  int m = (int) t.size();
+  vector<bool> qual(m);
+  const int mod = (int) 1e9 + 7;
+  for (int i = 0; i < m; ++i) { 
+    qual[i] = t[i] == '1' ? true : false;
+  }
+  string_hash<int> sh(N);
+  auto hashp = sh.ret_hashp(s);
+  auto hashp2 = sh.ret_hashp2(s);
+  vector<int> zero(n);
+  zero[0] = !qual[s[0] - 'a'];
+  for (int i = 1; i < n; ++i) { 
+    zero[i] = zero[i - 1] + !qual[s[i] - 'a'];
+  }
+  int p = 53;
+  int p2 = 31;
+  vector<int> p_pow(N);
+  vector<int> p2_pow(N);
+  p_pow[0] = p2_pow[0] = 1;
+  for (int i = 1; i < N; i++) { 
+    p_pow[i] = (p_pow[i - 1] * 1LL * p) % mod;
+    p2_pow[i] = (p2_pow[i - 1] * 1LL * p2) % mod;
+  }
+  int ans = 0;
+  for (int l = 1; l <= n; ++l) { 
+    set<pair<int, int>> st;
+    for (int j = 0; j <= n - l; ++j) { 
+      int has = zero[j + l - 1];
+      has -= j ? zero[j - 1] : 0;
+      if (has <= k) { 
+        int curp = hashp[j + l - 1];
+        curp -= j ? hashp[j - 1] : 0;
+        curp = (1LL * curp + mod) % mod;
+        curp = (curp * 1LL * p_pow[n - j - 1]) % mod;
+        int curp2 = hashp2[j + l - 1];
+        curp2 -= j ? hashp2[j - 1] : 0;
+        curp2 = (1LL * curp2 + mod) % mod;
+        curp2 = (curp2 * 1LL * p2_pow[n - j - 1]) % mod;
+        st.insert({curp, curp2});
+      }
+    }
+    ans += (int) st.size();
+  }
+  cout << ans << '\n';
+  dbg("Done\n");
+  return 0; 
+}

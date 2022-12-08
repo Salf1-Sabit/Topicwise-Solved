@@ -1,0 +1,104 @@
+/**
+ *    author: Salfi_Sabit 
+ *    created: 09.12.2022 12:04 PM
+ *    problem: https://codeforces.com/contest/86/problem/D
+**/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL 
+#include "template/debug.h"
+#else 
+#define dbg(args...) 
+#endif
+
+template <typename T> 
+struct mos_algo { 
+  int q;
+  vector<int> a;
+  vector<T> frq;
+  int tot_block; 
+  T curr_ans = 0;
+  vector<array<int, 3>> Q;
+  void proc () { 
+    sort(Q.begin(), Q.end(), [&] (array<int, 3> x, array<int, 3> y) { 
+      int blockl = x[0] / tot_block;
+      int blockr = y[0] / tot_block;
+      if (blockl != blockr) { 
+        return blockl < blockr;
+      }
+      return (x[0] / tot_block & 1) ? x[1] < y[1] : y[1] < x[1];
+    });
+  }
+  mos_algo (vector<array<int, 3>> Q, vector<int> a, int N) { 
+    this -> Q = Q;
+    this -> a = a;
+    q = (int) Q.size();
+    frq.assign(N + 1, 0);
+    tot_block = (int) sqrtl(q);
+    proc();
+  }
+  void add (int pos) { 
+    int f = ++frq[a[pos]];
+    curr_ans -= (f - 1) * 1LL * (f - 1) * a[pos];
+    curr_ans += f * 1LL * f * a[pos];
+  }
+  void remove (int pos) { 
+    int f = --frq[a[pos]];
+    curr_ans -= (f + 1) * 1LL * (f + 1) * a[pos];
+    curr_ans += f * 1LL * f * a[pos];
+  }
+  vector<T> query_answers () { 
+    int cur_l = 0;
+    int cur_r = -1;
+    vector<T> ans(q);
+    for (int i = 0; i < q; ++i) { 
+      int l = Q[i][0];
+      int r = Q[i][1];
+      int id = Q[i][2];
+      while (l < cur_l) { 
+        cur_l -= 1;
+        add(cur_l);
+      }
+      while (cur_r < r) { 
+        cur_r += 1;
+        add(cur_r);
+      }
+      while (cur_l < l) { 
+        remove(cur_l);
+        cur_l += 1;
+      }
+      while (r < cur_r) { 
+        remove(cur_r);
+        cur_r -= 1;
+      }
+      ans[id] = curr_ans; 
+    }
+    return ans;
+  }
+};
+
+int main() { 
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  int n, q;
+  scanf("%d %d", &n, &q);
+  vector<int> a(n);
+  for (auto& x : a) { 
+    scanf("%d", &x);
+  }
+  vector<array<int, 3>> Q;
+  for (int i = 0; i < q; ++i) { 
+    int l, r;
+    scanf("%d %d", &l, &r);
+    Q.push_back({--l, --r, i});
+  }
+  const int N = (int) 1e6;
+  mos_algo<long long> mo(Q, a, N);
+  auto ans = mo.query_answers();
+  for (auto x : ans) { 
+    printf("%I64d\n", x);
+  }
+  dbg("Done\n");
+  return 0; 
+}

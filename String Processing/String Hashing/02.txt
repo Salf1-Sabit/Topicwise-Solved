@@ -1,0 +1,163 @@
+/**
+ *    author: Salfi_Sabit 
+ *    created: 08.12.2022 11:58 PM
+ *    problem: https://codeforces.com/contest/126/problem/B
+**/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL 
+#include "template/debug.h"
+#else 
+#define dbg(args...) 
+#endif
+
+template <typename T> 
+struct kmp {
+  int n, m;
+  string s, t;
+  vector<T> pref_tab;
+  vector<T> suff_tab;
+  void proc_pref () { 
+    int i = 0;
+    for (int j = 1; j < n;) { 
+      if (s[i] == s[j]) { 
+        pref_tab[j] = i + 1;
+        i += 1, j += 1;
+      } else { 
+        if (i) { 
+          i = pref_tab[i - 1];
+        } else { 
+          j += 1;
+        }
+      }
+    }
+  }
+  void proc_suff () { 
+    int l = 0;
+    int i = n - 1;
+    for (int j = n - 2; j >= 0;) { 
+      if (s[i] == s[j]) { 
+        suff_tab[j] = l + 1;
+        l += 1, i -= 1, j -= 1;
+      } else { 
+        if (i < n - 1) { 
+          l = suff_tab[i + 1];
+          i = n - suff_tab[i + 1] - 1;
+        } else { 
+          j -= 1;
+        }
+      }
+    }
+  }
+  kmp (string s) {
+    this -> s = s;
+    n = (T) s.size();
+    pref_tab.assign(n, 0);
+    suff_tab.assign(n, 0);
+    proc_pref();
+    proc_suff();
+  }
+  vector<T> ret_pref () { 
+    return pref_tab;
+  }
+  vector<T> ret_suff () { 
+    return suff_tab;
+  }
+};
+
+template <typename T> 
+struct string_hash { 
+  int n;
+  int p1 = 53;
+  int p2 = 31;
+  int m = (int) 1e9 + 7;
+  vector<T> p1_pow;
+  vector<T> p2_pow;
+  void gen_pow () { 
+    p1_pow[0] = p2_pow[0] = 1;
+    for (int i = 1; i < n; i++) { 
+      p1_pow[i] = (p1_pow[i - 1] * 1LL * p1) % m;
+      p2_pow[i] = (p2_pow[i - 1] * 1LL * p2) % m;
+    }
+  }
+  string_hash (int n) { 
+    this -> n = n;
+    p1_pow.assign(n, 0);
+    p2_pow.assign(n, 0);
+    gen_pow();
+  }
+  vector<T> ret_p1 () { 
+    return p1_pow;
+  }
+  vector<T> ret_p2 () { 
+    return p2_pow;
+  }
+  vector<T> ret_pref_hashp1 (string s) { 
+    int sz = (int) s.size();
+    vector<T> hash_val(sz);
+    hash_val[0] = s[0] - 'a' + 1;
+    for (int i = 1; i < sz; ++i) { 
+      hash_val[i] = (hash_val[i - 1] + (((s[i] - 'a' + 1) * 1LL * p1_pow[i]) % m)) % m;
+    }
+    return hash_val;
+  }
+  vector<T> ret_pref_hashp2 (string s) { 
+    int sz = (int) s.size();
+    vector<T> hash_val(sz);
+    hash_val[0] = s[0] - 'a' + 1;
+    for (int i = 1; i < sz; ++i) { 
+      hash_val[i] = (hash_val[i - 1] + (((s[i] - 'a' + 1) * 1LL * p2_pow[i]) % m)) % m;
+    }
+    return hash_val;
+  }
+};
+
+int main() { 
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  string s;
+  cin >> s;
+  kmp<int> km(s);
+  auto pref = km.ret_pref();
+  auto suff = km.ret_suff();
+  int p1 = 53;
+  int p2 = 31;
+  int n = (int) s.size();
+  const int mod = (int) 1e9 + 7;
+  string_hash<int> sh(n + 1);
+  auto hashp1 = sh.ret_pref_hashp1(s);
+  auto hashp2 = sh.ret_pref_hashp2(s);
+  auto p1_pow = sh.ret_p1();
+  auto p2_pow = sh.ret_p2();
+  int ans = 0;
+  for (int i = 1; i < n; ++i) { 
+    int len = pref[i];
+    if (len) { 
+      if (suff[i - len + 1] == len) { 
+        int midp1 = hashp1[i];
+        midp1 -= i - len + 1 ? hashp1[i - len] : 0;
+        midp1 = (midp1 + mod) % mod;
+        midp1 = (midp1 * 1LL * p1_pow[n - i - 1]) % mod;
+        int lasp1  = hashp1[n - 1];
+        lasp1 -= n - 1 - len + 1 ? hashp1[n - 1 - len] : 0;
+        lasp1 = (lasp1 + mod) % mod;
+        int midp2 = hashp2[i];
+        midp2 -= i - len + 1 ? hashp2[i - len] : 0;
+        midp2 = (midp2 + mod) % mod;
+        midp2 = (midp2 * 1LL * p2_pow[n - i - 1]) % mod;
+        int lasp2  = hashp2[n - 1];
+        lasp2 -= n - 1 - len + 1 ? hashp2[n - 1 - len] : 0;
+        lasp2 = (lasp2 + mod) % mod;
+        string ss = s.substr(i - len + 1, len);
+        string tt = s.substr(n - 1 - len + 1, len);
+        if (midp1 == lasp1 and midp2 == lasp2) { 
+          ans = max(ans, len);
+        }
+      }
+    }
+  }
+  cout << (ans ? s.substr(0, ans) : "Just a legend") << '\n';
+  dbg("Done\n");
+  return 0; 
+}
