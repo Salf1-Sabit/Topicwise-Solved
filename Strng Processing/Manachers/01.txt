@@ -1,0 +1,127 @@
+/**
+ *    author: Salfi_Sabit 
+ *    created: 08.12.2022 08:50 PM
+ *    problem: https://codeforces.com/contest/1326/problem/D2
+**/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL 
+#include "template/debug.h"
+#else 
+#define dbg(args...) 
+#endif
+
+template <typename T> 
+struct manachers { 
+  int n;
+  vector<int> p;
+  void manac_odd (string s) { 
+    n = (int) s.size();
+    s = "(" + s + ")";
+    p.assign(n + 2, 0);
+    int l = 1, r = 1;
+    for (int i = 1; i <= n; ++i) { 
+      p[i] = max(0, min(r - i, p[l + (r - i)]));
+      while (s[i - p[i]] == s[i + p[i]]) { 
+        p[i] += 1;
+      }
+      if (r < i + p[i]) { 
+        l = i - p[i];
+        r = i + p[i];
+      }
+    }
+  }
+  manachers (string t) { 
+    string s = "";
+    for (auto c : t) { 
+      s += string("#") + c;
+    }
+    manac_odd(s + "#");
+  }
+  vector<T> ret_ans () { 
+    return vector<T>(p.begin() + 1, p.end() - 1);
+  }
+};
+
+int main() { 
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  int tt;
+  cin >> tt;
+  while (tt--) {
+    string s;
+    cin >> s;
+    manachers<int> man(s);
+    auto p = man.ret_ans();
+    string t = "";
+    for (auto c : s) { 
+      t += string("#") + c;
+    }
+    t += "#";
+    string pre = "";
+    string suf = "";
+    int n = (int) t.size();
+    int l = 0, r = n - 1;
+    assert(n == (int) p.size());
+    while (l < r and t[l] == t[r]) { 
+      pre += t[l];
+      suf += t[r];
+      l += 1;
+      r -= 1;
+    }
+    int id = 0;
+    int len = 0;
+    for (int i = l; i <= r; ++i) { 
+      if (i - l + 1 <= p[i]) { 
+        if (i - l <= r - i) { 
+          if (len < i - l + 1) { 
+            len = i - l + 1;
+            id = i;
+          }
+        }
+      }
+      if (r - i + 1 <= p[i]) { 
+        if (r - i <= i - l) { 
+          if (len < r - i + 1) { 
+            len = r - i + 1;
+            id = i;
+          }
+        }
+      }
+    }
+    auto ret_pal = [&] (int id2, int l2, int r2, int lim) { 
+      string ret = "";
+      string beg = "";
+      ret += t[id2];
+      while (r2 < n and t[l2] == t[r2]) { 
+        if (l2 == l - 1 or r2 == r + 1) { 
+          break;
+        }
+        beg += t[l2];
+        ret += t[r2];
+        l2 -= 1;
+        r2 += 1;
+      }
+      reverse(beg.begin(), beg.end());
+      return beg + ret;
+    };
+    string pal = ret_pal(id, id - 1, id + 1, l - 1);
+    reverse(suf.begin(), suf.end());
+    string can1 = pre + pal + suf;
+    assert(can1[0] == '#' and can1.back() == '#');
+    auto clean = [=] (string yy) { 
+      string dum = "";
+      for (auto c : yy) { 
+        if (c != '#') { 
+          dum += c;
+        }
+      }
+      return dum;
+    };
+    can1 = clean(can1);
+    cout << can1 << '\n';
+    dbg("Done\n");
+  }
+  return 0; 
+}
