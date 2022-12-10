@@ -1,0 +1,56 @@
+/**
+ *    author: Salfi_Sabit 
+ *    created: 11.12.2022 12:02 PM
+ *    problem: https://codeforces.com/problemset/problem/295/B
+**/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL 
+#include "template/debug.h"
+#else 
+#define dbg(args...) 
+#endif
+
+int main() { 
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  int n;
+  scanf("%d", &n);
+  vector<vector<int>> d(n + 1, vector<int>(n + 1));
+  for (int i = 1; i <= n; ++i) { 
+    for (int j = 1; j <= n; ++j) { 
+      scanf("%d", &d[i][j]);
+    }
+  }
+  vector<int> r(n + 1);
+  for (int i = 1; i <= n; ++i) { 
+    scanf("%d", &r[i]);
+  }
+  vector<long long> ans;
+  reverse(r.begin() + 1, r.end());
+  auto floyd_warshall = [&] () { 
+    for (int k = 1; k <= n; ++k) {
+      for (int i = 1; i <= n; ++i) { 
+        for (int j = 1; j <= n; ++j) { 
+          d[r[i]][r[j]] = min(d[r[i]][r[j]], d[r[i]][r[k]] + d[r[k]][r[j]]);
+        }
+      }
+      long long sum = 0;
+      for (int i = 1; i <= k; ++i) { 
+        for (int j = 1; j <= k; ++j) { 
+          sum += d[r[i]][r[j]];
+        }
+      }
+      ans.push_back(sum);
+    }
+    reverse(ans.begin(), ans.end());
+  };
+  floyd_warshall();
+  for (auto x : ans) { 
+    printf("%I64d ", x);
+  }
+  printf("\n");
+  dbg("Done\n");
+  return 0; 
+}
