@@ -1,0 +1,93 @@
+/**
+ *    author: Salfi_Sabit 
+ *    created: 12.12.2022 6:12 PM
+ *    problem: https://cses.fi/problemset/task/1678/
+ *    topic: Cycle finding in a directed graph
+**/
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL 
+#include "template/debug.h"
+#else 
+#define dbg(args...) 
+#endif
+
+namespace std {
+  template<class U>
+  class y_combinator_result {
+    U func;
+  public:
+    template<class T>
+    explicit y_combinator_result(T &&arg): func(std::forward<T>(arg)) {}
+    template<class ...Args>
+    decltype(auto) operator()(Args &&...args) {
+    return func(std::ref(*this), std::forward<Args>(args)...);
+    }
+  };
+  template<class U>
+  decltype(auto) y_combinator(U &&arg) {
+    return y_combinator_result<std::decay_t<U>>(std::forward<U>(arg));
+  }
+}
+
+int main() { 
+  ios::sync_with_stdio(false);
+  cin.tie(0);
+  int n, m;
+  scanf("%d %d", &n, &m);
+  vector<vector<int>> g(n + 1);
+  for (int i = 0; i < m; ++i) { 
+    int u, v;
+    scanf("%d %d", &u, &v);
+    g[u].push_back(v);
+  }
+  int cyc_end = -1;
+  int cyc_start = -1;
+  vector<int> color(n + 1), parent(n + 1);
+  auto dfs = y_combinator([&](auto dfs, int v) -> bool {
+    color[v] = 1;
+    for (auto u : g[v]) { 
+      if (!color[u]) { 
+        parent[u] = v;
+        if (dfs(u)) { 
+          return true;
+        }
+      } else if (color[u] == 1) { 
+        cyc_start = u;
+        cyc_end = v;
+        return true;
+      }
+    }
+    color[v] = 2;
+    return false;
+  });  
+  auto print_path = [&] () { 
+    vector<int> path;
+    path.push_back(cyc_start);
+    for (int v = cyc_end; v != cyc_start; v = parent[v]) { 
+      path.push_back(v);
+    }
+    path.push_back(cyc_start);
+    reverse(path.begin(), path.end());
+    printf("%d\n", (int) path.size());
+    for (auto p : path) { 
+      printf("%d ", p);
+    }
+    printf("\n");
+  };
+  auto detect_cycle = [&] () { 
+    for (int v = 1; v <= n; ++v) { 
+      if (!color[v] and dfs(v)) { 
+        break;
+      }
+    }
+    if (cyc_start == -1) { 
+      return printf("IMPOSSIBLE\n"), 0;
+    }
+    return print_path(), 0;
+  };
+  detect_cycle();
+  dbg("Done\n");
+  return 0; 
+}
